@@ -48,6 +48,23 @@ router.post('/', (req, res) => {
 
   db.prepare(`UPDATE apps SET current_price = ? WHERE id = ?`).run(newPrice, app_id);
 
+  // Emit WebSocket update to user's markets
+  const io = req.app.get('io');
+  if (io) {
+    const userMarkets = db.prepare(
+      'SELECT market_id FROM market_members WHERE user_id = ?'
+    ).all(app.user_id);
+    for (const { market_id } of userMarkets) {
+      io.to(`market:${market_id}`).emit('price-update', {
+        user_id: app.user_id,
+        app_id,
+        ticker: app.ticker,
+        price: newPrice,
+        pct_change: pctChange,
+      });
+    }
+  }
+
   res.status(201).json({ id, app_id, date, actual_minutes, price: newPrice, pct_change: pctChange });
 });
 
@@ -90,6 +107,18 @@ router.post('/batch', (req, res) => {
   });
 
   transaction();
+
+  // Emit WebSocket update
+  const io = req.app.get('io');
+  if (io && results.length > 0) {
+    const userMarkets = db.prepare(
+      'SELECT market_id FROM market_members WHERE user_id = ?'
+    ).all(user_id);
+    for (const { market_id } of userMarkets) {
+      io.to(`market:${market_id}`).emit('price-update', { user_id, results });
+    }
+  }
+
   res.status(201).json(results);
 });
 
