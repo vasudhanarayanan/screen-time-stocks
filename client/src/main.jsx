@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import LogTime from './pages/LogTime.jsx';
 import StockDetail from './pages/StockDetail.jsx';
 import Leaderboard from './pages/Leaderboard.jsx';
+import Settings from './pages/Settings.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="log" element={<LogTime />} />
           <Route path="stock/:appId" element={<StockDetail />} />
           <Route path="leaderboard/:marketId" element={<Leaderboard />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

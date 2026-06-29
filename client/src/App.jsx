@@ -1,51 +1,44 @@
-import { useState, useEffect, createContext } from 'react';
+import { createContext } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { api } from './api.js';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { useAuth } from './hooks/useAuth.js';
+import Login from './pages/Login.jsx';
 
 export const UserContext = createContext(null);
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, loginWithGoogle, loginDemo, logout } = useAuth();
 
-  useEffect(() => {
-    const stored = localStorage.getItem('userId');
-    if (stored) {
-      api.getUser(stored).then(setUser).catch(() => localStorage.removeItem('userId')).finally(() => setLoading(false));
-    } else {
-      api.getUsers().then(users => {
-        if (users.length > 0) {
-          setUser(users[0]);
-          localStorage.setItem('userId', users[0].id);
-        }
-      }).finally(() => setLoading(false));
-    }
-  }, []);
-
-  if (loading) return <div className="container"><p style={{ padding: '40px', color: 'var(--text-muted)' }}>Loading...</p></div>;
+  if (loading) {
+    return <div className="container"><p style={{ padding: '40px', color: 'var(--text-muted)' }}>Loading...</p></div>;
+  }
 
   if (!user) {
     return (
-      <div className="container">
-        <div className="empty-state">
-          <h2>Welcome to Screen Time Stocks</h2>
-          <p>Run <code>npm run seed</code> in the server directory to create demo data.</p>
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <div className="container">
+          <Login onGoogleLogin={loginWithGoogle} onDemoLogin={loginDemo} />
         </div>
-      </div>
+      </GoogleOAuthProvider>
     );
   }
 
   return (
-    <UserContext.Provider value={user}>
-      <div className="container">
-        <nav>
-          <span className="logo">STS</span>
-          <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''}>Portfolio</NavLink>
-          <NavLink to="/log" className={({ isActive }) => isActive ? 'active' : ''}>Log Time</NavLink>
-          <NavLink to={`/leaderboard/first`} className={({ isActive }) => isActive ? 'active' : ''}>Leaderboard</NavLink>
-        </nav>
-        <Outlet />
-      </div>
-    </UserContext.Provider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <UserContext.Provider value={{ ...user, logout }}>
+        <div className="container">
+          <nav>
+            <span className="logo">STS</span>
+            <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''}>Portfolio</NavLink>
+            <NavLink to="/log" className={({ isActive }) => isActive ? 'active' : ''}>Log Time</NavLink>
+            <NavLink to={`/leaderboard/first`} className={({ isActive }) => isActive ? 'active' : ''}>Leaderboard</NavLink>
+            <NavLink to="/settings" className={({ isActive }) => isActive ? 'active' : ''}>Settings</NavLink>
+          </nav>
+          <Outlet />
+        </div>
+      </UserContext.Provider>
+    </GoogleOAuthProvider>
   );
 }

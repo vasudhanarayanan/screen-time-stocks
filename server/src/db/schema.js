@@ -14,7 +14,10 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
+    email TEXT UNIQUE,
     avatar_url TEXT,
+    google_id TEXT UNIQUE,
+    api_key TEXT UNIQUE,
     invite_code TEXT UNIQUE NOT NULL,
     created_at TEXT DEFAULT (datetime('now'))
   );

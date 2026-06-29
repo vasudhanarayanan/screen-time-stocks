@@ -1,6 +1,7 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { UserContext } from '../App.jsx';
 import { api } from '../api.js';
+import { useSocket } from '../hooks/useSocket.js';
 
 export default function Leaderboard() {
   const user = useContext(UserContext);
@@ -9,6 +10,7 @@ export default function Leaderboard() {
   const [inviteCode, setInviteCode] = useState('');
   const [newMarketName, setNewMarketName] = useState('');
   const [message, setMessage] = useState('');
+  const [flash, setFlash] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -19,6 +21,17 @@ export default function Leaderboard() {
       }
     });
   }, [user]);
+
+  // Live WebSocket updates
+  const handlePriceUpdate = useCallback((data) => {
+    if (!activeMarket) return;
+    // Refresh the leaderboard when any member logs time
+    api.getMarket(activeMarket.id).then(setActiveMarket);
+    setFlash(data.user_id);
+    setTimeout(() => setFlash(null), 1500);
+  }, [activeMarket]);
+
+  useSocket(handlePriceUpdate);
 
   const handleJoin = async (e) => {
     e.preventDefault();
@@ -50,7 +63,12 @@ export default function Leaderboard() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.5rem', marginBottom: 24 }}>Leaderboard</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+        <h1 style={{ fontSize: '1.5rem' }}>Leaderboard</h1>
+        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: 12, background: '#00d4aa22', color: '#00d4aa' }}>
+          LIVE
+        </span>
+      </div>
 
       {message && (
         <div className="card" style={{ marginBottom: 16, padding: '12px 20px', borderColor: 'var(--green)' }}>
@@ -97,7 +115,14 @@ export default function Leaderboard() {
             <p style={{ color: 'var(--text-muted)' }}>No members yet.</p>
           ) : (
             activeMarket.leaderboard?.map((member, i) => (
-              <div key={member.id} className="leaderboard-row">
+              <div
+                key={member.id}
+                className="leaderboard-row"
+                style={{
+                  transition: 'background 0.3s',
+                  background: flash === member.id ? 'rgba(0, 212, 170, 0.1)' : 'transparent',
+                }}
+              >
                 <span className="rank" style={{ color: i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? '#cd7f32' : 'var(--text-muted)' }}>
                   #{i + 1}
                 </span>
