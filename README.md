@@ -40,7 +40,13 @@ Beat your goal → stock goes up. Exceed it → stock crashes. Streaks compound 
 - **Auth:** Google OAuth 2.0 (ID token verification) + API keys for automation
 - **Styling:** Custom CSS with dark theme, JetBrains Mono for data
 
+## Live Demo
+
+**[screen-time-stocks.up.railway.app](https://screen-time-stocks-production.up.railway.app)**
+
 ## Getting Started
+
+### Local Development
 
 ```bash
 # Clone
@@ -60,6 +66,28 @@ cd client && npm run dev    # UI on localhost:5173
 ```
 
 Open http://localhost:5173
+
+### Environment Variables
+
+Copy `.env.example` and fill in your values:
+
+| Variable | Description |
+|----------|-------------|
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `VITE_GOOGLE_CLIENT_ID` | Same client ID (used by the React client at build time) |
+| `JWT_SECRET` | Secret for signing auth tokens (generate with `openssl rand -hex 32`) |
+| `DATABASE_PATH` | Path to SQLite file (defaults to `server/data.db`) |
+
+### Deployment (Railway)
+
+The app is configured for one-click deployment on [Railway](https://railway.app):
+
+1. Connect your GitHub repo in Railway
+2. Set the environment variables above in **Service Variables**
+3. Add a **Volume** mounted at `/data` for persistent SQLite storage
+4. Set `DATABASE_PATH` to `/data/app.db`
+5. Generate a domain under **Settings → Networking**
+6. Add your Railway domain to Google OAuth authorized origins
 
 ## Project Structure
 
@@ -122,7 +150,7 @@ screen-time-stocks/
 
 1. Go to **Settings** in the app to copy your API key
 2. Create an iOS Shortcut with **Get Contents of URL**:
-   - URL: `https://your-server/api/shortcuts/log`
+   - URL: `https://<your-railway-domain>/api/shortcuts/log`
    - Method: `POST`
    - Headers: `Authorization: Bearer <your-api-key>`
    - Body: `{"entries": [{"app": "Instagram", "minutes": 30}, {"app": "TikTok", "minutes": 15}]}`
