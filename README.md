@@ -2,6 +2,7 @@
 
 Your screen time, gamified as a stock portfolio. Each app you track is a "stock" — its price rises when you beat your daily goal and crashes when you doomscroll.
 
+[![CI](https://github.com/vasudhanarayanan/screen-time-stocks/actions/workflows/ci.yml/badge.svg)](https://github.com/vasudhanarayanan/screen-time-stocks/actions/workflows/ci.yml)
 ![Dashboard](https://img.shields.io/badge/stack-React%20%2B%20Express%20%2B%20SQLite-blue)
 
 ## How It Works
@@ -89,15 +90,34 @@ The app is configured for one-click deployment on [Railway](https://railway.app)
 5. Generate a domain under **Settings → Networking**
 6. Add your Railway domain to Google OAuth authorized origins
 
+## Testing
+
+The backend has a test suite (Vitest + Supertest) covering the core logic and API surface. Tests run against an in-memory SQLite database, so they're fast and leave no artifacts.
+
+```bash
+cd server && npm test
+```
+
+Coverage spans four layers:
+
+- **Pricing unit tests** — the stock price formula: gains under goal, losses over goal, the ±30% daily swing clamp, and the price floor.
+- **Auth tests** — JWT signing/verification, the auth middleware, and dual-credential support (JWT *or* API key).
+- **Route integration tests** — exercise the real Express app end-to-end via HTTP: demo login, app creation, snapshot logging with price movement and duplicate-day rejection, market create/join/leaderboard ranking, and the iOS Shortcuts auto-create flow.
+- **WebSocket test** — boots a real server, connects an authenticated Socket.IO client, and asserts a `price-update` event is pushed to a market room when a member logs time.
+
+CI (GitHub Actions) runs the server test suite and builds the client on every push and PR.
+
 ## Project Structure
 
 ```
 screen-time-stocks/
 ├── server/
 │   └── src/
-│       ├── index.js           # Express + HTTP + WebSocket entry
+│       ├── index.js           # Express app factory + HTTP + WebSocket entry
 │       ├── auth.js            # JWT signing/verification + middleware
 │       ├── websocket.js       # Socket.IO setup + market rooms
+│       ├── lib/
+│       │   └── pricing.js     # Shared stock price formula
 │       ├── db/
 │       │   ├── schema.js      # SQLite schema + connection
 │       │   └── seed.js        # Demo data generator
@@ -108,6 +128,7 @@ screen-time-stocks/
 │           ├── snapshots.js   # Daily usage logging + price calc + WS emit
 │           ├── markets.js     # Leaderboard groups
 │           └── shortcuts.js   # iOS Shortcuts endpoint
+│   └── test/                  # Vitest + Supertest suite (in-memory SQLite)
 ├── client/
 │   └── src/
 │       ├── App.jsx            # Layout + routing + Google OAuth provider

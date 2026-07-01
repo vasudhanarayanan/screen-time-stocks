@@ -1,19 +1,9 @@
 import { Router } from 'express';
 import { nanoid } from 'nanoid';
 import db from '../db/schema.js';
+import { calculatePrice } from '../lib/pricing.js';
 
 const router = Router();
-
-const VOLATILITY = 0.15;
-const MAX_SWING = 0.30;
-
-function calculatePrice(prevPrice, goalMinutes, actualMinutes) {
-  const ratio = goalMinutes / actualMinutes;
-  const rawChange = (ratio - 1) * VOLATILITY * 3;
-  const pctChange = Math.max(-MAX_SWING, Math.min(MAX_SWING, rawChange));
-  const newPrice = Math.max(1, prevPrice * (1 + pctChange));
-  return { newPrice, pctChange: pctChange * 100 };
-}
 
 // Log screen time for an app (this is the core action)
 router.post('/', (req, res) => {
